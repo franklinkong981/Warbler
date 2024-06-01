@@ -18,12 +18,13 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
 toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
-
+app.app_context().push()
+# db.create_all() Don't actually need this because this line is in seed.py which you're supposed to run first.
 
 ##############################################################################
 # User signup/login/logout
@@ -78,7 +79,7 @@ def signup():
             db.session.commit()
 
         except IntegrityError:
-            flash("Username already taken", 'danger')
+            flash("Username and/or email already taken", 'danger')
             return render_template('users/signup.html', form=form)
 
         do_login(user)
@@ -113,7 +114,13 @@ def login():
 def logout():
     """Handle logout of user."""
 
-    # IMPLEMENT THIS
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    do_logout()
+    flash("Successfully logged out.", "success")
+    return redirect("/")    
 
 
 ##############################################################################
