@@ -22,4 +22,14 @@ class LoginForm(FlaskForm):
     """Login form."""
 
     username = StringField('Username', validators=[DataRequired(message="Please enter your username!")])
-    password = PasswordField('Password', validators=[DataRequired(message="Please enter your password!"), Length(min=6, message="Your password must be at least 6 characters long!")])
+    password = PasswordField('Password', validators=[DataRequired(message="Please enter your password!")])
+
+class EditProfileForm(FlaskForm):
+    """Form for a logged in user to update/edit their profile information."""
+
+    username = StringField('Username', validators=[DataRequired(message="You must provide a username!")])
+    email = StringField('E-mail', validators=[DataRequired(message="You must provide an email!"), Email(message="You must provide a valid email!")])
+    image_url = StringField('(Optional) Image URL', validators=[Optional()])
+    header_image_url = StringField('(Optional) Header Image URL', validators=[Optional()])
+    bio = StringField('Bio', validators=[Optional()])
+    password = PasswordField('Password', validators=[DataRequired(message="Please enter your password!")]) 
