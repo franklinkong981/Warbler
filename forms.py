@@ -32,4 +32,5 @@ class EditProfileForm(FlaskForm):
     image_url = StringField('(Optional) Image URL', validators=[Optional()])
     header_image_url = StringField('(Optional) Header Image URL', validators=[Optional()])
     bio = StringField('Bio', validators=[Optional()])
+    location = StringField('Location', validators=[Optional()])
     password = PasswordField('Password', validators=[DataRequired(message="Please enter your password!")]) 

@@ -216,9 +216,36 @@ def stop_following(follow_id):
 
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
-    """Update profile for current user."""
+    """Show form to update user profile information, update profile for current userif password in form matches."""
 
-    # IMPLEMENT THIS
+    if not g.user:
+        flash("Access unauthorized", "danger")
+        return redirect("/")
+    
+    form = EditProfileForm(obj=g.user)
+    if form.validate_on_submit():
+        # Need to make sure password matches, then need to make sure the username is STILL unique.
+        if User.confirm_password(session[CURR_USER_KEY], form.password.data):
+            g.user.username = form.username.data
+            g.user.email = form.email.data
+            g.user.image_url = form.image_url.data or User.image_url.default.arg
+            g.user.header_image_url = form.header_image_url.data or User.header_image_url.default.arg
+            g.user.bio = form.bio.data or None
+            g.user.location = form.location.data or None
+
+            try:
+                db.session.commit()
+            except IntegrityError:
+                flash("Unable to update profile, new username/email already taken", 'danger')
+                return redirect('/')
+            
+            flash("Profile successfully updated!", "success")
+            return redirect(f'/users/{session[CURR_USER_KEY]}')
+        else:
+            flash("Unable to update profile. Invalid password.", "danger")
+            return redirect('/')
+
+    return render_template("users/edit.html", form=form, user_id=g.user.id)
 
 
 @app.route('/users/delete', methods=["POST"])

@@ -168,6 +168,17 @@ class User(db.Model):
                 return user
 
         return False
+    
+    @classmethod
+    def confirm_password(cls, id, password):
+        """Make sure that hashed password matches logged in user's current hashed password. Used to verify profile edit form submission."""
+
+        user = cls.query.get(id)
+
+        if user:
+            return bcrypt.check_password_hash(user.password, password)
+        
+        return False
 
 
 class Message(db.Model):
