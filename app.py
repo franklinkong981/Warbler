@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm, EditProfileForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, Likes, Follows
 
 CURR_USER_KEY = "curr_user"
 
@@ -157,7 +157,7 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    return render_template('users/show.html', user=user, messages=messages)
+    return render_template('users/show.html', user=user, messages=messages, likes=g.user.likes)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -294,8 +294,35 @@ def messages_add():
 def messages_show(message_id):
     """Show a message."""
 
-    msg = Message.query.get(message_id)
-    return render_template('messages/show.html', message=msg)
+    msg = Message.query.get_or_404(message_id)
+    return render_template('messages/show.html', message=msg, likes=g.user.likes)
+
+@app.route('/messages/<int:message_id>/like', methods=["POST"])
+def toggle_like(message_id):
+    """Toggles the logged in user liking/unliking a specific message. The logged in user can only like/unlike messages made by 
+    other users. If user likes a message, the Like is added to the database. If the user unlikes a message, the Like is removed from
+    the database."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    msg = Message.query.get_or_404(message_id)
+    if msg in g.user.likes:
+        # If the message is contained within logged in user's likes, then the user has just unliked it.
+        g.user.likes = [like for like in g.user.likes if like != msg]
+        flash("Warble successfully unliked!", "success")
+    else:
+        # If the message isn't contained within logged in user's likes, then the user has just liked it.
+        g.user.likes.append(msg)
+        flash("Warble successfully liked!", "success")
+
+    db.session.commit()
+
+    
+    redirect_url = request.referrer or "/"
+    return redirect(redirect_url)
+
 
 
 @app.route('/messages/<int:message_id>/delete', methods=["POST"])
@@ -306,7 +333,7 @@ def messages_destroy(message_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    msg = Message.query.get(message_id)
+    msg = Message.query.get_or_404(message_id)
     db.session.delete(msg)
     db.session.commit()
 
@@ -326,13 +353,17 @@ def homepage():
     """
 
     if g.user:
+        # messages displayed in home page should either belong to the logged in user or a user that the logged in user follows.
+        matching_user_ids = [user.id for user in g.user.following] + [g.user.id]
         messages = (Message
                     .query
+                    .filter(Message.user_id.in_(matching_user_ids))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
+        print("The length is ", len(messages))
 
-        return render_template('home.html', messages=messages)
+        return render_template('home.html', messages=messages, likes=g.user.likes)
 
     else:
         return render_template('home-anon.html')
