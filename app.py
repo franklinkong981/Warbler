@@ -213,6 +213,13 @@ def stop_following(follow_id):
 
     return redirect(f"/users/{g.user.id}/following")
 
+@app.route('/users/<int:user_id>/likes')
+def view_likes(user_id):
+    """Displays all the warbles/messages that are currently liked by the user with id of user_id."""
+
+    user = User.query.get_or_404(user_id)
+    return render_template('users/likes.html', user=user, likes=user.likes)
+
 
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
