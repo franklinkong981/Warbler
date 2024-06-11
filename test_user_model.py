@@ -7,52 +7,63 @@
 
 import os
 from unittest import TestCase
+from app import create_app
 
-from models import db, User, Message, Follows
+from models import db, connect_db, User, Message, Follows, Likes
 
-# BEFORE we import our app, let's set an environmental variable
-# to use a different database for tests (we need to do this
-# before we import our app, since that will have already
-# connected to the database
-
-os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
-
-
-# Now we can import app
-
-from app import app
+# Create another application instance that connects to the testing database (warbler_test) instead fo the main database (warbler).
+app = create_app("warbler_test", testing=True)
+connect_db(app)
+app.app_context().push()
 
 # Create our tables (we do this here, so we only create the tables
 # once for all tests --- in each test, we'll delete the data
 # and create fresh new clean test data
 
+db.drop_all()
 db.create_all()
 
-
 class UserModelTestCase(TestCase):
-    """Test views for messages."""
+    """Test views for user model."""
 
     def setUp(self):
-        """Create test client, add sample data."""
+        """Before each test, delete any existing data in the tables, create test client, store sample user in users table."""
 
         User.query.delete()
         Message.query.delete()
         Follows.query.delete()
+        Likes.query.delete()
 
-        self.client = app.test_client()
-
-    def test_user_model(self):
-        """Does basic model work?"""
-
-        u = User(
-            email="test@test.com",
-            username="testuser",
-            password="HASHED_PASSWORD"
+        user1 = User(
+            email="user1@test.com",
+            username="user1",
+            password="HASHED_PASSWORD1"
         )
 
-        db.session.add(u)
+        user2 = User(
+            email="user2@test.com",
+            username="user2",
+            password="HASHED_PASSWORD2"
+        )
+
+        user3 = User(
+            email="user3@test.com",
+            username="user3",
+            password="HASHED_PASSWORD3"
+        )
+
+        db.session.add_all([user1, user2, user3])
         db.session.commit()
 
+    
+    def tearDown(self):
+        """After each test, revert each table back to original state."""
+        db.session.rollback()
+
+    def test_basic(self):
+        """Does basic user model work?"""
+
         # User should have no messages & no followers
-        self.assertEqual(len(u.messages), 0)
-        self.assertEqual(len(u.followers), 0)
+        user1 = User.query.filter(User.username == 'user1').first()
+        self.assertEqual(len(user1.messages), 0)
+        self.assertEqual(len(user1.followers), 0)

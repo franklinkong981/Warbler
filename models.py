@@ -216,6 +216,8 @@ def connect_db(app):
 
     You should call this in your Flask app.
     """
+    with app.app_context():
+        db.app = app
+        db.init_app(app)
+        db.create_all()
 
-    db.app = app
-    db.init_app(app)
