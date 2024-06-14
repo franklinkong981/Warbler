@@ -61,6 +61,8 @@ def create_app(db_name, testing=False):
     def signup():
         """Handle user signup.
 
+        If user is already signed in, redirect to home page.
+
         Create new user and add to DB. Redirect to home page.
 
         If form not valid, present form.
@@ -68,6 +70,10 @@ def create_app(db_name, testing=False):
         If the there already is a user with that username: flash message
         and re-present form.
         """
+
+        if g.user:
+            flash("You already have an account and are signed in.", "danger")
+            return redirect("/")
 
         form = UserAddForm()
 
@@ -95,7 +101,11 @@ def create_app(db_name, testing=False):
 
     @app.route('/login', methods=["GET", "POST"])
     def login():
-        """Handle user login."""
+        """Handle user login. If user is already signed in, redirect to home page."""
+
+        if g.user:
+            flash("You are already logged in.", "danger")
+            return redirect("/")
 
         form = LoginForm()
 
@@ -118,7 +128,7 @@ def create_app(db_name, testing=False):
         """Handle logout of user."""
 
         if not g.user:
-            flash("Access unauthorized.", "danger")
+            flash("You weren't signed in to begin with!.", "danger")
             return redirect("/")
 
         do_logout()
@@ -160,7 +170,7 @@ def create_app(db_name, testing=False):
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-        return render_template('users/show.html', user=user, messages=messages, likes=g.user.likes)
+        return render_template('users/show.html', user=user, messages=messages, likes=user.likes)
 
 
     @app.route('/users/<int:user_id>/following')
@@ -168,7 +178,7 @@ def create_app(db_name, testing=False):
         """Show list of people this user is following."""
 
         if not g.user:
-            flash("Access unauthorized.", "danger")
+            flash("Sign in to see a user's following.", "danger")
             return redirect("/")
 
         user = User.query.get_or_404(user_id)
@@ -180,7 +190,7 @@ def create_app(db_name, testing=False):
         """Show list of followers of this user."""
 
         if not g.user:
-            flash("Access unauthorized.", "danger")
+            flash("Sign in to see a user's followers.", "danger")
             return redirect("/")
 
         user = User.query.get_or_404(user_id)
@@ -192,7 +202,7 @@ def create_app(db_name, testing=False):
         """Add a follow for the currently-logged-in user."""
 
         if not g.user:
-            flash("Access unauthorized.", "danger")
+            flash("Sign in to follow someone.", "danger")
             return redirect("/")
 
         followed_user = User.query.get_or_404(follow_id)
@@ -207,7 +217,7 @@ def create_app(db_name, testing=False):
         """Have currently-logged-in-user stop following this user."""
 
         if not g.user:
-            flash("Access unauthorized.", "danger")
+            flash("Sign in to stop following someone.", "danger")
             return redirect("/")
 
         followed_user = User.query.get(follow_id)
@@ -220,6 +230,10 @@ def create_app(db_name, testing=False):
     def view_likes(user_id):
         """Displays all the warbles/messages that are currently liked by the user with id of user_id."""
 
+        if not g.user:
+            flash("Sign in to see a user's liked warbles.", "danger")
+            return redirect("/")
+
         user = User.query.get_or_404(user_id)
         return render_template('users/likes.html', user=user, likes=user.likes)
 
@@ -229,7 +243,7 @@ def create_app(db_name, testing=False):
         """Show form to update user profile information, update profile for current userif password in form matches."""
 
         if not g.user:
-            flash("Access unauthorized", "danger")
+            flash("Sign in to update your profile information", "danger")
             return redirect("/")
         
         form = EditProfileForm(obj=g.user)
@@ -263,7 +277,7 @@ def create_app(db_name, testing=False):
         """Delete user."""
 
         if not g.user:
-            flash("Access unauthorized.", "danger")
+            flash("Sign in to delete your account.", "danger")
             return redirect("/")
 
         do_logout()
@@ -285,7 +299,7 @@ def create_app(db_name, testing=False):
         """
 
         if not g.user:
-            flash("Access unauthorized.", "danger")
+            flash("Sign in to create a new warble.", "danger")
             return redirect("/")
 
         form = MessageForm()
@@ -305,7 +319,7 @@ def create_app(db_name, testing=False):
         """Show a message."""
 
         msg = Message.query.get_or_404(message_id)
-        return render_template('messages/show.html', message=msg, likes=g.user.likes)
+        return render_template('messages/show.html', message=msg)
 
     @app.route('/messages/<int:message_id>/like', methods=["POST"])
     def toggle_like(message_id):
@@ -314,7 +328,7 @@ def create_app(db_name, testing=False):
         the database."""
 
         if not g.user:
-            flash("Access unauthorized.", "danger")
+            flash("Sign in to like a warble.", "danger")
             return redirect("/")
 
         msg = Message.query.get_or_404(message_id)
@@ -337,13 +351,19 @@ def create_app(db_name, testing=False):
 
     @app.route('/messages/<int:message_id>/delete', methods=["POST"])
     def messages_destroy(message_id):
-        """Delete a message."""
+        """Delete a message. A user must be logged in to delete a message, and  logged in users can only delete their own messages."""
 
         if not g.user:
-            flash("Access unauthorized.", "danger")
+            flash("Sign in to delete a warble.", "danger")
             return redirect("/")
 
         msg = Message.query.get_or_404(message_id)
+
+        if msg.user.id != session[CURR_USER_KEY]:
+            flash("You can only delete a warble that you've created.", "danger")
+            redirect_url = request.referrer or "/"
+            return redirect(redirect_url)
+        
         db.session.delete(msg)
         db.session.commit()
 
