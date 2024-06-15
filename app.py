@@ -339,6 +339,12 @@ def create_app(db_name, testing=False):
             return redirect("/")
 
         msg = Message.query.get_or_404(message_id)
+
+        # Logged in user can't like their own warbles.
+        if msg.user_id == session[CURR_USER_KEY]:
+            flash("You can't like a warble you created!")
+            return redirect("/")
+
         if msg in g.user.likes:
             # If the message is contained within logged in user's likes, then the user has just unliked it.
             g.user.likes = [like for like in g.user.likes if like != msg]
@@ -368,8 +374,7 @@ def create_app(db_name, testing=False):
 
         if msg.user.id != session[CURR_USER_KEY]:
             flash("You can only delete a warble that you've created.", "danger")
-            redirect_url = request.referrer or "/"
-            return redirect(redirect_url)
+            return redirect("/")
         
         db.session.delete(msg)
         db.session.commit()
