@@ -219,6 +219,13 @@ def create_app(db_name, testing=False):
         if not g.user:
             flash("Sign in to stop following someone.", "danger")
             return redirect("/")
+        
+        # list of ids of users that the logged in user currently follows
+        following_ids = [user.id for user in g.user.following]
+        # check to make sure currently logged in user is currently following the user they want to stop following
+        if follow_id not in following_ids:
+            flash("You are already not following this user", "danger")
+            return redirect(f"/users/{g.user.id}/following")
 
         followed_user = User.query.get(follow_id)
         g.user.following.remove(followed_user)
