@@ -409,6 +409,10 @@ def create_app(db_name, testing=False):
 
         else:
             return render_template('home-anon.html')
+    
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template("404.html")
 
 
     ##############################################################################
