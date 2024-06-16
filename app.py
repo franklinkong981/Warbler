@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm, EditProfileForm
+from forms import UserAddForm, LoginForm, MessageForm, EditProfileForm, ChangePasswordForm
 from models import db, connect_db, User, Message, Likes, Follows
 
 CURR_USER_KEY = "curr_user"
@@ -247,7 +247,7 @@ def create_app(db_name, testing=False):
 
     @app.route('/users/profile', methods=["GET", "POST"])
     def profile():
-        """Show form to update user profile information, update profile for current userif password in form matches."""
+        """Show form to update user profile information, update profile for current user if password in form matches."""
 
         if not g.user:
             flash("Sign in to update your profile information", "danger")
@@ -277,6 +277,41 @@ def create_app(db_name, testing=False):
                 return redirect('/')
 
         return render_template("users/edit.html", form=form, user_id=g.user.id)
+
+    @app.route('/users/change_password', methods=['GET', 'POST'])
+    def change_password():
+        """Show form to change a logged in user's password, update password for current user if the current password they type in matches."""
+
+        if not g.user:
+            flash("Sign in to change your password", "danger")
+            return redirect("/")
+        
+        form = ChangePasswordForm()
+        if form.validate_on_submit():
+            current_password = form.current_password.data
+            new_password = form.new_password.data
+            new_password_confirm = form.new_password_confirm.data
+
+            # First have to check whether current password user entered matches
+            if User.confirm_password(session[CURR_USER_KEY], current_password):
+                # Finally, new password and confirm new password fields have to match
+                if new_password == new_password_confirm:
+                    User.update_password(session[CURR_USER_KEY], new_password)
+                    try:
+                        db.session.commit()
+                    except IntegrityError:
+                        flash("Unable to update password, internal server error. Please try again later", 'danger')
+                        return redirect('/users/change_password.html', form=form)
+                
+                    flash("Password successfully updated!", "success")
+                    return redirect(f'/users/{session[CURR_USER_KEY]}')
+                else:
+                    flash("Unable to update password. Your confirm new password doesn't match your new password!", "danger")
+
+            else:
+                flash("Unable to update password. Your current password doesn't match!", "danger")
+        
+        return render_template("users/change_password.html", form=form, user_id=g.user.id)
 
 
     @app.route('/users/delete', methods=["POST"])

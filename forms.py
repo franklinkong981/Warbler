@@ -38,6 +38,6 @@ class EditProfileForm(FlaskForm):
 class ChangePasswordForm(FlaskForm):
     """Form for a logged in user to change their password."""
 
-    current_password = PasswordField('Current Password', validators=[DataRequired(message="You must provide your current password first!")])
-    new_password = PasswordField('New Password', validators=[DataRequired(message="Your new password can't be blank!")])
+    current_password = PasswordField('Current Password', validators=[DataRequired(message="You must provide your current password first!"), Length(min=6,message="Your password must be at least 6 characters long!")])
+    new_password = PasswordField('New Password', validators=[DataRequired(message="Your new password can't be blank!"), Length(min=6,message="Your new password must be at least 6 characters long!")])
     new_password_confirm = PasswordField('Confirm New Password', validators=[DataRequired(message="You must confirm your new password by typing it in again!")])

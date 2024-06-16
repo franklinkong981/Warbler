@@ -171,7 +171,7 @@ class User(db.Model):
     
     @classmethod
     def confirm_password(cls, id, password):
-        """Make sure that hashed password matches logged in user's current hashed password. Used to verify profile edit form submission."""
+        """Make sure that hashed password matches logged in user's current hashed password. Used to verify profile edit form submission and change password form submission."""
 
         user = cls.query.get(id)
 
@@ -179,6 +179,15 @@ class User(db.Model):
             return bcrypt.check_password_hash(user.password, password)
         
         return False
+    
+    @classmethod
+    def update_password(cls, id, new_password):
+        """Updates a user with id 'id' password to new_password."""
+
+        user = cls.query.get(id)
+        new_hashed_password = bcrypt.generate_password_hash(new_password).decode('UTF-8')
+        user.password = new_hashed_password
+        
 
 
 class Message(db.Model):
