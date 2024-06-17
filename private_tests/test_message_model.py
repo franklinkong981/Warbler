@@ -2,7 +2,7 @@
 
 # run these tests like:
 #
-#    python -m unittest test_user_model.py
+#    python -m unittest private_tests/test_message_model.py
 
 
 import os
@@ -28,8 +28,10 @@ class MessageModelTestCase(TestCase):
 
     def setUp(self):
         """Create test client, add sample data."""
-        db.drop_all()
-        db.create_all()
+        User.query.delete()
+        Message.query.delete()
+        Follows.query.delete()
+        Likes.query.delete()
 
         self.uid = 94566
         u = User.signup("testing", "testing@test.com", "password", None)

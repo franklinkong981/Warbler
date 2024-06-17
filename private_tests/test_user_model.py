@@ -2,31 +2,26 @@
 
 # run these tests like:
 #
-#    python -m unittest test_user_model.py
+#    python -m unittest private_tests/test_user_model.py
 
 
-from app import app
 import os
 from unittest import TestCase
+from app import create_app
 from sqlalchemy import exc
 
-from models import db, User, Message, Follows
+from models import db, connect_db, User, Message, Follows, Likes
 
-# BEFORE we import our app, let's set an environmental variable
-# to use a different database for tests (we need to do this
-# before we import our app, since that will have already
-# connected to the database
-
-os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
-
-
-# Now we can import app
-
+# Create another application instance that connects to the testing database (warbler_test) instead fo the main database (warbler).
+app = create_app("warbler_test", testing=True)
+connect_db(app)
+app.app_context().push()
 
 # Create our tables (we do this here, so we only create the tables
 # once for all tests --- in each test, we'll delete the data
 # and create fresh new clean test data
 
+db.drop_all()
 db.create_all()
 
 
@@ -35,8 +30,10 @@ class UserModelTestCase(TestCase):
 
     def setUp(self):
         """Create test client, add sample data."""
-        db.drop_all()
-        db.create_all()
+        User.query.delete()
+        Message.query.delete()
+        Follows.query.delete()
+        Likes.query.delete()
 
         u1 = User.signup("test1", "email1@email.com", "password", None)
         uid1 = 1111

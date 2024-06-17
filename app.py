@@ -178,7 +178,7 @@ def create_app(db_name, testing=False):
         """Show list of people this user is following."""
 
         if not g.user:
-            flash("Sign in to see a user's following.", "danger")
+            flash("Sign in to see people following a user.", "danger")
             return redirect("/")
 
         user = User.query.get_or_404(user_id)
@@ -190,7 +190,7 @@ def create_app(db_name, testing=False):
         """Show list of followers of this user."""
 
         if not g.user:
-            flash("Sign in to see a user's followers.", "danger")
+            flash("Sign in to see people a user is following.", "danger")
             return redirect("/")
 
         user = User.query.get_or_404(user_id)
@@ -408,7 +408,7 @@ def create_app(db_name, testing=False):
         msg = Message.query.get_or_404(message_id)
 
         if msg.user.id != session[CURR_USER_KEY]:
-            flash("You can only delete a warble that you've created.", "danger")
+            flash("You can only delete a warble that you created.", "danger")
             return redirect("/")
         
         db.session.delete(msg)
