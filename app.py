@@ -170,7 +170,7 @@ def create_app(db_name, testing=False):
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-        return render_template('users/show.html', user=user, messages=messages, likes=user.likes)
+        return render_template('users/show.html', user=user, messages=messages, likes=g.user.likes)
 
 
     @app.route('/users/<int:user_id>/following')
