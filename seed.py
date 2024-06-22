@@ -4,11 +4,12 @@ import os
 from csv import DictReader
 from app import db
 from models import User, Message, Follows, Likes, db, connect_db
-from app import create_app
+from app import app
 from dotenv import load_dotenv
 
 load_dotenv()
-app = create_app('warbler')
+# app = create_app('warbler')
+print("The database is: ", os.environ.get('DATABASE_URL'))
 connect_db(app)
 app.app_context().push()
 
