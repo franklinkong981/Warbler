@@ -1,10 +1,13 @@
 """Seed database with sample data from CSV Files."""
 
+import os
 from csv import DictReader
 from app import db
 from models import User, Message, Follows, Likes, db, connect_db
 from app import create_app
+from dotenv import load_dotenv
 
+load_dotenv()
 app = create_app('warbler')
 connect_db(app)
 app.app_context().push()
