@@ -470,10 +470,13 @@ def create_app(db_name, testing=False):
     return app
 
 app = create_app('warbler')
+connect_db(app)
+app.run(debug=True)
 
+"""
 if __name__ == '__main__':
     connect_db(app)
     app.run(debug=True)
-
+"""
 
 
