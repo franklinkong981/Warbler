@@ -468,11 +468,12 @@ def create_app(db_name, testing=False):
         return req
     
     return app
-
+"""
 app = create_app('warbler')
 if __name__ == '__main__':
     connect_db(app)
     app.run(debug=True)
+"""
 
 
 
